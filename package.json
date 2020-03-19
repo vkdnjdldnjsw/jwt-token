@@ -1,8 +1,8 @@
 {
   "name": "jwt-token",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "",
-  "main": "build/src/index.js",
+  "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run clear && tsc",
@@ -28,6 +28,6 @@
     "typescript": "^3.7.5"
   },
   "files": [
-    "build/src/"
+    "build/"
   ]
 }

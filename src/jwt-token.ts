@@ -1,5 +1,5 @@
 import Jwt from 'jsonwebtoken'
-import { JwtError } from '@/jwt-error'
+import { JwtError } from './jwt-error'
 
 export interface Decoded<T> {
   payload: T
