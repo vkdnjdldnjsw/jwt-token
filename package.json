@@ -1,10 +1,13 @@
 {
   "name": "jwt-token",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "build/src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run clear && tsc",
+    "clear": "rimraf build/*",
+    "deploy": "npm run build && npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -17,7 +20,14 @@
   },
   "homepage": "https://github.com/vkdnjdldnjsw/jwt-token#readme",
   "dependencies": {
-    "dayjs": "^1.8.23",
-    "jsonwebtoken": "^8.5.1"
-  }
+    "@types/jsonwebtoken": "^8.3.8",
+    "dayjs": "^1.8.23"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.0",
+    "typescript": "^3.7.5"
+  },
+  "files": [
+    "build/src/"
+  ]
 }

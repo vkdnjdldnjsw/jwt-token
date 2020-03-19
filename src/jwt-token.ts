@@ -1,5 +1,5 @@
 import Jwt from 'jsonwebtoken'
-import { JwtError } from './jwt-error'
+import { JwtError } from '@/jwt-error'
 
 export interface Decoded<T> {
   payload: T
@@ -18,8 +18,8 @@ export interface CreateTokenOption<T> {
 }
 
 export class JwtToken<T> {
-  public token: string
-  public decoded: Decoded<T>
+  public token: string = ''
+  public decoded: Decoded<T> = {} as Decoded<T>
 
   constructor(config: DecodeTokenOption | CreateTokenOption<T>) {
     if ((config as DecodeTokenOption).token !== undefined) {
@@ -31,8 +31,7 @@ export class JwtToken<T> {
   }
 
   static errorWrapper(code: number): JwtError {
-    const err = new JwtError()
-    err.code = code
+    const err = new JwtError(code)
     switch (code) {
       case JwtError.ERROR.EXPIRED_JWT:
         err.message = 'expired jwt'
