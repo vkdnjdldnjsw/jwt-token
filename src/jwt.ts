@@ -4,7 +4,12 @@ import {
   CreateRefreshTokenOption,
   DecodeRefreshTokenOption,
 } from './refresh-token'
-import { JwtToken, CreateTokenOption, DecodeTokenOption } from './jwt-token'
+import {
+  JwtToken,
+  CreateTokenOption,
+  DecodeTokenOption,
+  TokenOption,
+} from './jwt-token'
 import { JwtError } from './jwt-error'
 
 export interface Tokens<T> {
@@ -88,7 +93,7 @@ export class Jwt {
   static async refresh<T>(
     refreshTokenString: string,
     refreshTokenOption: RefreshTokenOption<T>,
-    createAccessTokenOption: CreateTokenOption<T>,
+    accessTokenOption: TokenOption<T>,
     getRefreshToken: (
       refreshToken: RefreshToken<T>
     ) => Promise<ResultOfGetRefreshToken | undefined>,
@@ -123,7 +128,7 @@ export class Jwt {
     result.refreshToken = savedRefreshToken
     const accessToken = new JwtToken<T>({
       payload: savedRefreshToken.decoded.payload,
-      ...createAccessTokenOption,
+      ...accessTokenOption,
     } as CreateTokenOption<T>)
     result.accessToken = accessToken
     return result

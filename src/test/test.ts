@@ -204,10 +204,6 @@ const testPaylaod: Payload = {
     },
     {
       expire: '14d',
-      payload: {
-        userId: 1,
-        isAdmin: false,
-      },
       secret: 'access',
     },
     async () => {
@@ -264,10 +260,6 @@ const testPaylaod: Payload = {
     },
     {
       expire: '14d',
-      payload: {
-        userId: 1,
-        isAdmin: false,
-      },
       secret: 'access',
     },
     async () => {
@@ -299,10 +291,6 @@ const testPaylaod: Payload = {
     },
     {
       expire: '14d',
-      payload: {
-        userId: 1,
-        isAdmin: false,
-      },
       secret: 'access',
     },
     async () => {
@@ -331,10 +319,6 @@ const testPaylaod: Payload = {
     },
     {
       expire: '14d',
-      payload: {
-        userId: 1,
-        isAdmin: false,
-      },
       secret: 'access',
     },
     async () => {

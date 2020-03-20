@@ -1,13 +1,13 @@
 {
   "name": "jwt-token",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "",
   "main": "build/index.js",
   "scripts": {
     "test": "npm run clear && tsc -p tsconfig.test.json && node build/test/test.js",
     "build": "npm run clear && tsc",
     "clear": "rimraf build/*",
-    "deploy": "npm run build && npm publish --access public"
+    "version-patch": "npm run build && npm version patch"
   },
   "repository": {
     "type": "git",
