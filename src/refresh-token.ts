@@ -1,17 +1,26 @@
 import dayjs from 'dayjs'
-import { CreateTokenOption, DecodeTokenOption, JwtToken } from './jwt-token'
+import {
+  CreateTokenOption,
+  DecodeTokenOption,
+  JwtToken,
+  TokenOption,
+} from './jwt-token'
 
-export interface RefreshTokenOption {
+export interface RefreshOption {
   refreshRefreshTokenAllowedValue: number
   refreshRefreshTokenAllowedUnit: dayjs.UnitType
 }
 
+export interface RefreshTokenOption<T> extends TokenOption<T> {
+  refreshTokenOption: RefreshOption
+}
+
 export interface DecodeRefreshTokenOption extends DecodeTokenOption {
-  refreshTokenOption: RefreshTokenOption
+  refreshTokenOption: RefreshOption
 }
 
 export interface CreateRefreshTokenOption<T> extends CreateTokenOption<T> {
-  refreshTokenOption: RefreshTokenOption
+  refreshTokenOption: RefreshOption
 }
 
 export class RefreshToken<T> extends JwtToken<T> {
@@ -24,7 +33,7 @@ export class RefreshToken<T> extends JwtToken<T> {
     super(config)
   }
 
-  isAllowedRefresh(refreshTokenOption: RefreshTokenOption): boolean {
+  isAllowedRefresh(refreshTokenOption: RefreshOption): boolean {
     const refreshTokenExpireDate = dayjs.unix(this.decoded.exp)
     if (
       refreshTokenExpireDate.diff(

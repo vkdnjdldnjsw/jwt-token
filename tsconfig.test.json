@@ -17,5 +17,5 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "build"
   },
-  "exclude": ["node_modules", "build", "data", "src/test"]
+  "exclude": ["node_modules", "build", "data"]
 }

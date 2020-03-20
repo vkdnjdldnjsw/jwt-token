@@ -6,15 +6,19 @@ export interface Decoded<T> {
   exp: number
   iat: number
 }
+
+export interface TokenOption<T> {
+  secret: string
+  expire: string
+}
+
 export interface DecodeTokenOption {
   token: string
   secret: string
 }
 
-export interface CreateTokenOption<T> {
+export interface CreateTokenOption<T> extends TokenOption<T> {
   payload: T
-  secret: string
-  expire: string
 }
 
 export class JwtToken<T> {
@@ -30,19 +34,6 @@ export class JwtToken<T> {
     this.verify(config.secret)
   }
 
-  static errorWrapper(code: number): JwtError {
-    const err = new JwtError(code)
-    switch (code) {
-      case JwtError.ERROR.EXPIRED_JWT:
-        err.message = 'expired jwt'
-        break
-      case JwtError.ERROR.INVALID_JWT:
-        err.message = 'inavlid jwt'
-        break
-    }
-    return err
-  }
-
   create(createTokenOption: CreateTokenOption<T>): void {
     const { payload, secret, expire } = createTokenOption
 
@@ -56,10 +47,10 @@ export class JwtToken<T> {
       this.decoded = Jwt.verify(this.token, secret) as Decoded<T>
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
-        throw JwtToken.errorWrapper(JwtError.ERROR.EXPIRED_JWT)
+        throw new JwtError(JwtError.ERROR.EXPIRED_JWT)
       } else {
         console.error(err)
-        throw JwtToken.errorWrapper(JwtError.ERROR.INVALID_JWT)
+        throw new JwtError(JwtError.ERROR.INVALID_JWT)
       }
     }
   }
