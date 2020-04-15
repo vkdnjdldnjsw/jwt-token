@@ -7,36 +7,24 @@ export interface Decoded<T> {
   iat: number
 }
 
-export interface TokenOption<T> {
-  secret: string
-  expire: string
-}
-
-export interface DecodeTokenOption {
-  token: string
-  secret: string
-}
-
-export interface CreateTokenOption<T> extends TokenOption<T> {
-  payload: T
-}
-
 export class JwtToken<T> {
   public token: string = ''
   public decoded: Decoded<T> = {} as Decoded<T>
 
-  constructor(config: DecodeTokenOption | CreateTokenOption<T>) {
-    if ((config as DecodeTokenOption).token !== undefined) {
-      this.token = (config as DecodeTokenOption).token
-    } else {
-      this.create(config as CreateTokenOption<T>)
+  constructor(secret: string, token: string)
+  constructor(secret: string, payload: T, expire: string)
+  constructor(secret: string, p1: string | T, p2?: string) {
+    switch (arguments.length) {
+      case 2:
+        this.token = p1 as string
+        break
+      case 3:
+        this.create(secret, p1 as T, p2!)
     }
-    this.verify(config.secret)
+    this.verify(secret)
   }
 
-  create(createTokenOption: CreateTokenOption<T>): void {
-    const { payload, secret, expire } = createTokenOption
-
+  create(secret: string, payload: T, expire: string): void {
     this.token = Jwt.sign({ payload }, secret, {
       expiresIn: expire,
     })

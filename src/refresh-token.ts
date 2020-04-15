@@ -1,45 +1,15 @@
 import dayjs from 'dayjs'
-import {
-  CreateTokenOption,
-  DecodeTokenOption,
-  JwtToken,
-  TokenOption,
-} from './jwt-token'
-
-export interface RefreshOption {
-  refreshRefreshTokenAllowedValue: number
-  refreshRefreshTokenAllowedUnit: dayjs.UnitType
-}
-
-export interface RefreshTokenOption<T> extends TokenOption<T> {
-  refreshTokenOption: RefreshOption
-}
-
-export interface DecodeRefreshTokenOption extends DecodeTokenOption {
-  refreshTokenOption: RefreshOption
-}
-
-export interface CreateRefreshTokenOption<T> extends CreateTokenOption<T> {
-  refreshTokenOption: RefreshOption
-}
+import { JwtToken } from './jwt-token'
 
 export class RefreshToken<T> extends JwtToken<T> {
-  private refreshOption?: {
-    allowedValue: number
-    unit: dayjs.UnitType
-  }
-
-  constructor(config: DecodeRefreshTokenOption | CreateRefreshTokenOption<T>) {
-    super(config)
-  }
-
-  isAllowedRefresh(refreshTokenOption: RefreshOption): boolean {
+  isAllowedRefresh(
+    refreshRefreshTokenAllowedValue: number,
+    refreshRefreshTokenAllowedUnit: dayjs.UnitType
+  ): boolean {
     const refreshTokenExpireDate = dayjs.unix(this.decoded.exp)
     if (
-      refreshTokenExpireDate.diff(
-        dayjs(),
-        refreshTokenOption.refreshRefreshTokenAllowedUnit
-      ) <= refreshTokenOption.refreshRefreshTokenAllowedValue
+      refreshTokenExpireDate.diff(dayjs(), refreshRefreshTokenAllowedUnit) <=
+      refreshRefreshTokenAllowedValue
     ) {
       return true
     } else {
@@ -48,13 +18,18 @@ export class RefreshToken<T> extends JwtToken<T> {
   }
 
   refreshRefreshTokenIfPossible(
-    CreaterefreshTokenOption: CreateRefreshTokenOption<T>
+    secret: string,
+    payload: T,
+    expire: string,
+    refreshRefreshTokenAllowedValue: number,
+    refreshRefreshTokenAllowedUnit: dayjs.UnitType
   ): boolean {
     const isAllowed = this.isAllowedRefresh(
-      CreaterefreshTokenOption.refreshTokenOption
+      refreshRefreshTokenAllowedValue,
+      refreshRefreshTokenAllowedUnit
     )
     if (isAllowed) {
-      this.create(CreaterefreshTokenOption)
+      this.create(secret, payload, expire)
     }
     return isAllowed
   }

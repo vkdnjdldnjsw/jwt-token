@@ -1,20 +1,11 @@
-import {
-  RefreshToken,
-  RefreshTokenOption,
-  CreateRefreshTokenOption,
-  DecodeRefreshTokenOption,
-} from './refresh-token'
-import {
-  JwtToken,
-  CreateTokenOption,
-  DecodeTokenOption,
-  TokenOption,
-} from './jwt-token'
+import { RefreshToken } from './refresh-token'
+import { JwtToken } from './jwt-token'
 import { JwtError } from './jwt-error'
+import dayjs from 'dayjs'
 
-export interface Tokens<T> {
-  accessToken: JwtToken<T>
-  refreshToken: RefreshToken<T>
+export interface Tokens<AccessTokenPayload, RefreshTokenPayload> {
+  accessToken: JwtToken<AccessTokenPayload>
+  refreshToken: RefreshToken<RefreshTokenPayload>
 }
 export interface ResultOfGetRefreshToken {
   manuallyChangedAt: number
@@ -22,50 +13,67 @@ export interface ResultOfGetRefreshToken {
 }
 
 export class Jwt {
-  static async getTokenOrCreateTokens<T>(
-    payload: T,
-    refreshTokenOption: RefreshTokenOption<T>,
-    createAccessTokenOption: CreateTokenOption<T>,
-    getRefreshToken: (payload: T) => Promise<string | undefined>,
-    saveRefreshToken: (refreshToken: RefreshToken<T>) => Promise<void>,
-    updateRefreshToken: (refreshToken: RefreshToken<T>) => Promise<void>
-  ): Promise<Tokens<T>> {
-    const result = {} as Tokens<T>
-    const accessToken = new JwtToken<T>({
-      payload,
-      ...createAccessTokenOption,
-    } as CreateTokenOption<T>)
+  static async getTokenOrCreateTokens<AccessTokenPayload, RefreshTokenPayload>(
+    accessTokenSecret: string,
+    accessTokenPayload: AccessTokenPayload,
+    accessTokenExpire: string,
+    refreshTokenSecret: string,
+    refreshTokenPayload: RefreshTokenPayload,
+    refreshTokenExpire: string,
+    refreshRefreshTokenAllowedValue: number,
+    refreshRefreshTokenAllowedUnit: dayjs.UnitType,
+    getRefreshToken: (
+      payload: RefreshTokenPayload
+    ) => Promise<string | undefined>,
+    saveRefreshToken: (
+      refreshToken: RefreshToken<RefreshTokenPayload>
+    ) => Promise<void>,
+    updateRefreshToken: (
+      refreshToken: RefreshToken<RefreshTokenPayload>
+    ) => Promise<void>
+  ): Promise<Tokens<AccessTokenPayload, RefreshTokenPayload>> {
+    const result = {} as Tokens<AccessTokenPayload, RefreshTokenPayload>
+    const accessToken = new JwtToken<AccessTokenPayload>(
+      accessTokenSecret,
+      accessTokenPayload,
+      accessTokenExpire
+    )
     result.accessToken = accessToken
-    const savedRefreshToken = await getRefreshToken(payload)
+    const savedRefreshToken = await getRefreshToken(refreshTokenPayload)
     if (savedRefreshToken === undefined) {
       // no refresh token in db
-      const refreshToken = new RefreshToken<T>({
-        payload,
-        ...refreshTokenOption,
-      } as CreateRefreshTokenOption<T>)
+      const refreshToken = new RefreshToken<RefreshTokenPayload>(
+        refreshTokenSecret,
+        refreshTokenPayload,
+        refreshTokenExpire
+      )
       await saveRefreshToken(refreshToken)
       result.refreshToken = refreshToken
     } else {
       try {
-        const refreshToken = new RefreshToken<T>({
-          token: savedRefreshToken,
-          ...refreshTokenOption,
-        } as DecodeRefreshTokenOption)
+        const refreshToken = new RefreshToken<RefreshTokenPayload>(
+          refreshTokenSecret,
+          savedRefreshToken
+        )
         if (
-          refreshToken.refreshRefreshTokenIfPossible({
-            payload,
-            ...refreshTokenOption,
-          } as CreateRefreshTokenOption<T>)
+          refreshToken.refreshRefreshTokenIfPossible(
+            refreshTokenSecret,
+            refreshTokenPayload,
+            refreshTokenExpire,
+            refreshRefreshTokenAllowedValue,
+            refreshRefreshTokenAllowedUnit
+          )
         ) {
           // refreshToken is refreshed
           await updateRefreshToken(refreshToken)
         }
         result.refreshToken = refreshToken
       } catch (_) {
-        const refreshToken = new RefreshToken<T>({
-          payload,
-          ...refreshTokenOption,
-        } as CreateRefreshTokenOption<T>)
+        const refreshToken = new RefreshToken<RefreshTokenPayload>(
+          refreshTokenSecret,
+          refreshTokenPayload,
+          refreshTokenExpire
+        )
         await updateRefreshToken(refreshToken)
         result.refreshToken = refreshToken
       }
@@ -74,13 +82,17 @@ export class Jwt {
     return result
   }
 
-  static async verifyAccessToken<T>(
-    decodeAccessTokenOption: DecodeTokenOption,
-    getManuallyChangedAt: (accessToken: JwtToken<T>) => Promise<number>
-  ): Promise<T> {
-    const accessToken = new JwtToken<T>({
-      ...decodeAccessTokenOption,
-    } as DecodeTokenOption)
+  static async verifyAccessToken<AccessTokenPayload>(
+    accessTokenSecret: string,
+    accessTokenString: string,
+    getManuallyChangedAt: (
+      accessToken: JwtToken<AccessTokenPayload>
+    ) => Promise<number>
+  ): Promise<AccessTokenPayload> {
+    const accessToken = new JwtToken<AccessTokenPayload>(
+      accessTokenSecret,
+      accessTokenString
+    )
     const manuallyChangedAt = await getManuallyChangedAt(accessToken)
     if (manuallyChangedAt === undefined) {
       throw new JwtError(JwtError.ERROR.NO_MANUALLY_CHANGED_AT)
@@ -90,20 +102,27 @@ export class Jwt {
     return accessToken.decoded.payload
   }
 
-  static async refresh<T>(
+  static async refresh<AccessTokenPayload, RefreshTokenPayload>(
+    accessTokenSecret: string,
+    accessTokenPayload: AccessTokenPayload,
+    accessTokenExpire: string,
+    refreshTokenSecret: string,
     refreshTokenString: string,
-    refreshTokenOption: RefreshTokenOption<T>,
-    accessTokenOption: TokenOption<T>,
+    refreshTokenExpire: string,
+    refreshRefreshTokenAllowedValue: number,
+    refreshRefreshTokenAllowedUnit: dayjs.UnitType,
     getRefreshToken: (
-      refreshToken: RefreshToken<T>
+      refreshToken: RefreshToken<RefreshTokenPayload>
     ) => Promise<ResultOfGetRefreshToken | undefined>,
-    updateRefreshToken: (refreshToken: RefreshToken<T>) => Promise<void>
-  ): Promise<Tokens<T>> {
-    const result = {} as Tokens<T>
-    const refreshToken = new RefreshToken<T>({
-      token: refreshTokenString,
-      ...refreshTokenOption,
-    } as DecodeRefreshTokenOption)
+    updateRefreshToken: (
+      refreshToken: RefreshToken<RefreshTokenPayload>
+    ) => Promise<void>
+  ): Promise<Tokens<AccessTokenPayload, RefreshTokenPayload>> {
+    const result = {} as Tokens<AccessTokenPayload, RefreshTokenPayload>
+    const refreshToken = new RefreshToken<RefreshTokenPayload>(
+      refreshTokenSecret,
+      refreshTokenString
+    )
     const resultOfGetRefreshToken = await getRefreshToken(refreshToken)
     if (resultOfGetRefreshToken === undefined) {
       throw new JwtError(JwtError.ERROR.NO_RESULT_OF_GET_REFRESHTOKEN)
@@ -112,24 +131,28 @@ export class Jwt {
     ) {
       throw new JwtError(JwtError.ERROR.CREATED_BEFORE_BEING_MANUALLY_CHANGED)
     }
-    const savedRefreshToken = new RefreshToken<T>({
-      token: resultOfGetRefreshToken.refreshToken,
-      ...refreshTokenOption,
-    } as DecodeRefreshTokenOption)
+    const savedRefreshToken = new RefreshToken<RefreshTokenPayload>(
+      refreshTokenSecret,
+      resultOfGetRefreshToken.refreshToken
+    )
     const payload = savedRefreshToken.decoded.payload
     if (
-      savedRefreshToken.refreshRefreshTokenIfPossible({
+      savedRefreshToken.refreshRefreshTokenIfPossible(
+        refreshTokenSecret,
         payload,
-        ...refreshTokenOption,
-      })
+        refreshTokenExpire,
+        refreshRefreshTokenAllowedValue,
+        refreshRefreshTokenAllowedUnit
+      )
     ) {
       await updateRefreshToken(savedRefreshToken)
     }
     result.refreshToken = savedRefreshToken
-    const accessToken = new JwtToken<T>({
-      payload: savedRefreshToken.decoded.payload,
-      ...accessTokenOption,
-    } as CreateTokenOption<T>)
+    const accessToken = new JwtToken<AccessTokenPayload>(
+      accessTokenSecret,
+      accessTokenPayload,
+      accessTokenExpire
+    )
     result.accessToken = accessToken
     return result
   }
